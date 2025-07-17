@@ -9,20 +9,27 @@ import cors from 'cors'
 dotenv.config()
 
 const app = express()
-const PORT = process.env.PORT || 3000
 
-
-app.use(cors())
+app.use(cors({
+    origin: process.env.NODE_ENV === 'production' 
+        ? ['https://bysix-angular.vercel.app'] 
+        : ['http://localhost:4200', 'http://localhost:3000']
+}))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 
-app.get('/', (req, res) => {
-    res.json({ message: 'API funcionando na Vercel!' })
+app.get('/', (req: Request, res: Response) => {
+    res.json({ 
+        message: 'API is running',
+        timestamp: new Date().toISOString(),
+        version: '1.0.0'
+    })
 })
 
 
-app.post('/api/chat', async (req: Request, res: Response, next: NextFunction) => {
+
+app.post('/chat', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const requestDto = new ChatMessageRequest(req.body)
         ValidationChecker.validate(requestDto, next)
@@ -39,23 +46,14 @@ app.post('/api/chat', async (req: Request, res: Response, next: NextFunction) =>
 })
 
 
-app.get('*', (req, res) => {
-    res.status(404).json({
-        error: 'Rota não encontrada',
-        path: req.path,
-        method: req.method,
-    })
-})
-
-
 app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
     if (!(error instanceof Error)) {
         return next(error)
     }
-    console.error(error)
+    console.error('Error:', error)
 
     if (error instanceof SyntaxError) {
-        return res.status(400).send({
+        return res.status(400).json({
             title: 'Bad Request',
             status: 400,
             detail: error.message,
@@ -63,10 +61,10 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
     }
 
     if (error instanceof HttpError) {
-        return res.status(422).send(error.toJSON())
+        return res.status(422).json(error.toJSON())
     }
 
-    res.status(500).send({
+    res.status(500).json({
         title: 'Internal Server Error',
         status: 500,
         detail: 'An unexpected error occurred',
@@ -74,7 +72,10 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
 })
 
 
+
+
 if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 3000
     app.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`)
     })
