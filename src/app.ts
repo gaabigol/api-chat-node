@@ -11,14 +11,13 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 3000
 
-app.use(
-    cors({
-        origin: ['http://localhost:4200', 'https://bysix-angular.vercel.app'],
-        methods: ['POST', 'OPTIONS', 'GET'],
-    })
-)
+app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+
+app.get('/', (req, res) => {
+    res.json({ message: 'API funcionando na Vercel!' })
+})
 
 app.post('/chat', async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -53,6 +52,14 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
     if (error instanceof HttpError) {
         return res.status(422).send(error.toJSON())
     }
+
+    app.get('*', (req, res) => {
+        res.status(404).json({
+            error: 'Rota não encontrada',
+            path: req.path,
+            method: req.method,
+        })
+    })
 
     res.status(500).send({
         title: 'Internal Server Error',
