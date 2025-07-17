@@ -11,15 +11,18 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 3000
 
+
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+
 
 app.get('/', (req, res) => {
     res.json({ message: 'API funcionando na Vercel!' })
 })
 
-app.post('/chat', async (req: Request, res: Response, next: NextFunction) => {
+
+app.post('/api/chat', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const requestDto = new ChatMessageRequest(req.body)
         ValidationChecker.validate(requestDto, next)
@@ -34,6 +37,16 @@ app.post('/chat', async (req: Request, res: Response, next: NextFunction) => {
         next(error)
     }
 })
+
+
+app.get('*', (req, res) => {
+    res.status(404).json({
+        error: 'Rota não encontrada',
+        path: req.path,
+        method: req.method,
+    })
+})
+
 
 app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
     if (!(error instanceof Error)) {
@@ -53,14 +66,6 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
         return res.status(422).send(error.toJSON())
     }
 
-    app.get('*', (req, res) => {
-        res.status(404).json({
-            error: 'Rota não encontrada',
-            path: req.path,
-            method: req.method,
-        })
-    })
-
     res.status(500).send({
         title: 'Internal Server Error',
         status: 500,
@@ -68,6 +73,12 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
     })
 })
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`)
-})
+
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`)
+    })
+}
+
+
+export default app
