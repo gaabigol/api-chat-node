@@ -6,7 +6,7 @@
     "scripts": {
         "start": "node dist/index.js",
         "dev": "ts-node index.ts",
-        "build": "tsc"
+         "build": "express build --output public"
     },
     "devDependencies": {
         "@types/cors": "^2.8.19",
